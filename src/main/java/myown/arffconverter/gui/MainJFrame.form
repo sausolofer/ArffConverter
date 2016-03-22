@@ -153,6 +153,9 @@
           </Events>
         </Component>
         <Component class="javax.swing.JTextField" name="outputDirjTextField">
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="outputDirjTextField.setText(System.getProperty(&quot;user.home&quot;));"/>
+          </AuxValues>
         </Component>
         <Component class="javax.swing.JTextField" name="dataSourcejTextField">
         </Component>
@@ -250,6 +253,9 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Other:"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="otherjCheckBoxActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JCheckBox" name="tabjCheckBox">
               <Properties>
@@ -267,6 +273,9 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="otherjTextField">
+              <Properties>
+                <Property name="enabled" type="boolean" value="false"/>
+              </Properties>
             </Component>
           </SubComponents>
         </Container>
@@ -362,6 +371,8 @@
         <Component class="javax.swing.JButton" name="startjButton">
           <Properties>
             <Property name="text" type="java.lang.String" value="Start"/>
+            <Property name="enabled" type="boolean" value="false"/>
+            <Property name="selected" type="boolean" value="true"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="startjButtonActionPerformed"/>

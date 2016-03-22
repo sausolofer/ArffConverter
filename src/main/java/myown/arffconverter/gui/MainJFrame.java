@@ -6,15 +6,20 @@
 package myown.arffconverter.gui;
 
 import com.opencsv.CSVReader;
+import java.awt.Color;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import weka.core.Instances;
+import weka.core.converters.ArffSaver;
+import weka.core.converters.CSVLoader;
+import weka.core.converters.MatlabLoader;
 
 /**
  *
@@ -88,6 +93,8 @@ public class MainJFrame extends javax.swing.JFrame {
             }
         });
 
+        outputDirjTextField.setText(System.getProperty("user.home"));
+
         javax.swing.GroupLayout inputOutputjPanelLayout = new javax.swing.GroupLayout(inputOutputjPanel);
         inputOutputjPanel.setLayout(inputOutputjPanelLayout);
         inputOutputjPanelLayout.setHorizontalGroup(
@@ -125,12 +132,19 @@ public class MainJFrame extends javax.swing.JFrame {
         comajCheckBox.setText("Coma");
 
         otherjCheckBox.setText("Other:");
+        otherjCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                otherjCheckBoxActionPerformed(evt);
+            }
+        });
 
         tabjCheckBox.setText("Tab");
 
         semicolonjCheckBox.setText("Semicolon");
 
         spacejCheckBox.setText("Space");
+
+        otherjTextField.setEnabled(false);
 
         javax.swing.GroupLayout separatorjPanelLayout = new javax.swing.GroupLayout(separatorjPanel);
         separatorjPanel.setLayout(separatorjPanelLayout);
@@ -216,6 +230,8 @@ public class MainJFrame extends javax.swing.JFrame {
         runjPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         startjButton.setText("Start");
+        startjButton.setEnabled(false);
+        startjButton.setSelected(true);
         startjButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 startjButtonActionPerformed(evt);
@@ -317,29 +333,57 @@ public class MainJFrame extends javax.swing.JFrame {
 
     private void runProcess() throws FileNotFoundException, IOException {
         File folderFile = new File(sourcePath);
-
+        Instances instances;
         if (!folderFile.isFile()) {
             File[] listOfFiles = folderFile.listFiles();
 
-            for (File listOfFile : listOfFiles) {
-                if (listOfFile.isFile()) {
-                    System.out.println("File " + listOfFile.getName());
-                } else if (listOfFile.isDirectory()) {
-                    System.out.println("Directory " + listOfFile.getName());
+            for (File currentFile : listOfFiles) {
+                if (currentFile.isFile()) {
+                    System.out.println("File " + currentFile.getName());
+                    instances = getInstances(currentFile);
+                    if (instances != null) {
+                        writeInstances(instances, currentFile.getName());
+                    }
+
+                } else if (currentFile.isDirectory()) {
+                    System.out.println("Directory " + currentFile.getName());
                 }
             }
         } else {
             System.out.println("File " + folderFile.getName());
-            CSVReader csvReader = new CSVReader(new FileReader(folderFile));
-            List<String[]> list = csvReader.readAll();
-            Instances instances = getInstancesFromStringArrayList(list, folderFile.getName());
+            instances = getInstances(folderFile);
+            writeInstances(instances, folderFile.getName());
         }
-
     }
 
-    Instances getInstancesFromStringArrayList(List<String[]> list, String dataSetName) throws IOException {
+    private void writeInstances(Instances instances, String name) throws IOException {
+        ArffSaver saver = new ArffSaver();
+        instances.setClassIndex(instances.numAttributes() - 1);
+        saver.setInstances(instances);
+        saver.setFile(new File(outputPath + File.separator + name + ".arff"));
+        saver.writeBatch();
+    }
 
-        return null;
+    Instances getInstances(File file) throws IOException {
+        Instances instances = null;
+        if (isMatlab(file.getName())) {
+            MatlabLoader matlabLoader = new MatlabLoader();
+            matlabLoader.setFile(file);
+            matlabLoader.getDataSet();
+        } else {
+            CSVLoader csvloader = new CSVLoader();
+            csvloader.setFile(file);
+            ArrayList<String> separator = getSeparator();
+            for (String get : separator) {
+                csvloader.setFieldSeparator(get);
+                instances = csvloader.getDataSet();
+                if (instances.get(0).toDoubleArray().length != 1) {
+                    break;
+                }
+            }
+        }
+
+        return instances;
     }
 
     private void dataSourcejButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataSourcejButtonActionPerformed
@@ -347,6 +391,10 @@ public class MainJFrame extends javax.swing.JFrame {
         JFileChooser jfch = new JFileChooser();
         jfch.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         if (jfch.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            if (!outputDirjTextField.getText().isEmpty()) {
+                startjButton.setEnabled(true);
+            }
+
             dataSourcejTextField.setText(jfch.getSelectedFile().getPath());
             sourcePath = dataSourcejTextField.getText();
         }
@@ -360,6 +408,15 @@ public class MainJFrame extends javax.swing.JFrame {
             outputPath = outputDirjTextField.getText();
         }
     }//GEN-LAST:event_outputDirjButtonActionPerformed
+
+    private void otherjCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_otherjCheckBoxActionPerformed
+        if (otherjCheckBox.isSelected()) {
+            otherjTextField.setEnabled(true);
+        } else {
+            otherjTextField.setEnabled(false);
+        }
+
+    }//GEN-LAST:event_otherjCheckBoxActionPerformed
 
     /**
      * @param args the command line arguments
@@ -394,6 +451,31 @@ public class MainJFrame extends javax.swing.JFrame {
                 new MainJFrame().setVisible(true);
             }
         });
+    }
+
+    public static boolean isMatlab(String location) {
+        return location.toLowerCase().endsWith("m".toLowerCase());
+    }
+
+    private ArrayList<String> getSeparator() {
+        ArrayList<String> separatorList = new ArrayList<>();
+        if (comajCheckBox.isSelected()) {
+            separatorList.add(",");
+        }
+        if (semicolonjCheckBox.isSelected()) {
+            separatorList.add(";");
+        }
+        if (tabjCheckBox.isSelected()) {
+            separatorList.add("\\t");
+        }
+        if (spacejCheckBox.isSelected()) {
+            separatorList.add(" ");
+        }
+        if (otherjCheckBox.isSelected()) {
+            separatorList.add(otherjTextField.getText());
+        }
+
+        return separatorList;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
