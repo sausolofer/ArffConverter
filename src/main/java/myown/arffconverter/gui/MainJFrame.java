@@ -5,6 +5,7 @@
  */
 package myown.arffconverter.gui;
 
+import myown.arffconverter.loaders.MatlabLoader2;
 import com.opencsv.CSVReader;
 import java.awt.Color;
 import java.io.File;
@@ -19,7 +20,6 @@ import javax.swing.JFileChooser;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.CSVLoader;
-import weka.core.converters.MatlabLoader;
 
 /**
  *
@@ -367,9 +367,9 @@ public class MainJFrame extends javax.swing.JFrame {
     Instances getInstances(File file) throws IOException {
         Instances instances = null;
         if (isMatlab(file.getName())) {
-            MatlabLoader matlabLoader = new MatlabLoader();
+            MatlabLoader2 matlabLoader = new MatlabLoader2();
             matlabLoader.setFile(file);
-            matlabLoader.getDataSet();
+            instances = matlabLoader.getDataSet();
         } else {
             CSVLoader csvloader = new CSVLoader();
             csvloader.setFile(file);
@@ -454,7 +454,7 @@ public class MainJFrame extends javax.swing.JFrame {
     }
 
     public static boolean isMatlab(String location) {
-        return location.toLowerCase().endsWith("m".toLowerCase());
+        return location.toLowerCase().endsWith("mat".toLowerCase());
     }
 
     private ArrayList<String> getSeparator() {
